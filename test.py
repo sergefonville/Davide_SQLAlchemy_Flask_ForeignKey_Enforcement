@@ -51,3 +51,11 @@ db.session.add(p2)
 
 # After the session has everything defined, commit it to the database
 db.session.commit()
+
+# Since these exist now, the next step is another post by the same user, the user object will now contain john
+user = db.session.query(User).filter(User.username == 'john').first()
+
+p3 = Post(body='My second Post!!', author=user)
+db.session.add(p3)
+
+db.session.commit()
