@@ -12,7 +12,7 @@ class User(db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    posts = db.relationship('Post', backref='author', lazy='dynamic')
+    posts = db.relationship('Post', lazy='dynamic')
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -21,7 +21,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(140))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
         return '<Post {}>'.format(self.body)
@@ -29,13 +29,23 @@ class Post(db.Model):
 db.drop_all()
 db.create_all()
 
-u = User(username='susan', email='susan@example.com')
-db.session.add(u)
+# Susan will be both created and added to the databases
+u1 = User(username='susan', email='susan@example.com')
+db.session.add(u1)
 
-p = Post(body='this is my post!', user_id=1)
+# John will be created, but not added
+u2 = User(username='john', email='john@example.com')
 
-db.session.add(p)
+# Create a post by Susan
+p1 = Post(body='this is my post!', user_id=u1.id)
 
-# Now I create a new post for a non-existing user and I'd expect an error...
-p = Post(body='this is my post!', user_id=2)
- 
+# Add susan's post to the databases
+db.session.add(p1)
+
+# Create a post by john, but do not save it
+p2 = Post(body='this is my post!', user_id=u2.id)
+
+# Add john's post to the databases
+db.session.add(p2)
+
+db.session.commit()
