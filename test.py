@@ -12,7 +12,7 @@ class User(db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    posts = db.relationship('Post', lazy='dynamic')
+    posts = db.relationship('Post', lazy='dynamic', back_populates='author')
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -21,7 +21,8 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(140))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    author = db.relationship('User')
 
     def __repr__(self):
         return '<Post {}>'.format(self.body)
@@ -29,7 +30,7 @@ class Post(db.Model):
 db.drop_all()
 db.create_all()
 
-# Susan will be both created and added to the databases
+# Susan will be both created and added to the session
 u1 = User(username='susan', email='susan@example.com')
 db.session.add(u1)
 
@@ -37,15 +38,16 @@ db.session.add(u1)
 u2 = User(username='john', email='john@example.com')
 
 # Create a post by Susan
-p1 = Post(body='this is my post!', user_id=u1.id)
+p1 = Post(body='this is my post!', author=u1)
 
-# Add susan's post to the databases
+# Add susan's post to the session
 db.session.add(p1)
 
-# Create a post by john, but do not save it
-p2 = Post(body='this is my post!', user_id=u2.id)
+# Create a post by john, since john does not yet exist as a user, he is created automatically
+p2 = Post(body='this is my post!', author=u2)
 
-# Add john's post to the databases
+# Add john's post to the session
 db.session.add(p2)
 
+# After the session has everything defined, commit it to the database
 db.session.commit()
